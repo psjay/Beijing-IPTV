@@ -34,7 +34,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git merge -X theirs upstream/master --no-ff --commit -m "Merge upstream master (resolving conflicts with upstream changes)"
+          git merge -X theirs --allow-unrelated-histories upstream/master --no-ff --commit -m "Merge upstream master (resolving conflicts with upstream changes)"
 
       - name: Replace multicast to unicast and save to new file
         if: steps.check-changes.outputs.changes_detected == 'true'
