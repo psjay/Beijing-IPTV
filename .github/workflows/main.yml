@@ -1,0 +1,49 @@
+name: Sync Fork and Replace
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  sync-and-replace:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/qwerttvv/Beijing-IPTV.git || true
+          git fetch upstream
+
+      - name: Check if Unicom-Multicast.m3u has changed
+        id: check-changes
+        run: |
+          # 比较本地的 Unicom-Multicast.m3u 和 upstream/master 中的文件
+          if ! git diff --quiet HEAD upstream/master -- IPTV-Unicom-Multicast.m3u; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Merge upstream master if changes detected
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git merge upstream/master --no-ff --commit -m "Merge upstream master"
+
+      - name: Replace multicast to unicast and save to new file
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: |
+          sed 's|rtp://|http://10.0.0.1:4022/rtp/|g' IPTV-Unicom-Multicast.m3u > Unicom-Selfhosted.m3u
+
+      - name: Commit and push changes
+        if: steps.check-changes.outputs.changes_detected == 'true'
+        run: |
+          git add Unicom-Selfhosted.m3u
+          git commit -m "Update Unicom-Selfhosted.m3u with latest multicast to unicast changes."
+          git push origin master
