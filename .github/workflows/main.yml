@@ -34,7 +34,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git merge upstream/master --no-commit --no-ff
+          git merge upstream/master --no-commit --no-ff --allow-unrelated-histories
           git reset -- .github/workflows
           git commit -m "Merge upstream master.(ignoring GitHub Workflows)"
 
